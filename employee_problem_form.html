@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Problem Report</title>
+  <style>
+    :root{--blue:#0b45a0;--line:#202020;--bg:#eef2f5;--card:#fff;--muted:#667085;--danger:#c62828;--ok:#19733b}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:Arial,"Noto Sans Thai",sans-serif;color:#111}
+    .app{max-width:820px;margin:0 auto;background:#d7d7d7;min-height:100vh;box-shadow:0 0 18px #0002}
+    .topbar{background:#17375e;color:#fff;padding:13px 16px;font-size:20px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+    .topbar small{font-size:12px;font-weight:400;opacity:.85}
+    .section{border-bottom:1px solid var(--line);padding:12px}.section-title{font-weight:700;margin:0 0 9px;font-size:15px}
+    [hidden]{display:none!important}
+    .search-row{display:grid;grid-template-columns:1fr auto;gap:8px}.input,.textarea,.select{width:100%;border:1px solid #8b8b8b;border-radius:5px;background:#fff;padding:11px 12px;font-size:16px}.textarea{min-height:105px;resize:vertical}
+    button,.btn{border:0;border-radius:5px;padding:11px 17px;font-size:15px;font-weight:700;cursor:pointer}.btn-blue{color:#fff;background:var(--blue)}.btn-dark{color:#fff;background:#27313c}.btn-red{color:#fff;background:#b32222}.btn-light{color:#222;background:#e7ebef;border:1px solid #aeb6bf}.btn:disabled{opacity:.5;cursor:not-allowed}
+    .status{font-size:13px;padding-top:7px;min-height:24px;color:var(--muted)}.status.ok{color:var(--ok)}.status.error{color:var(--danger)}
+    .result-modal[hidden]{display:none!important}.result-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.55)}.result-dialog{width:min(100%,420px);background:#fff;border-radius:12px;padding:24px;box-shadow:0 18px 55px #0004;color:#1f2937}.result-dialog h2{font-size:20px;margin:0 0 12px}.result-dialog p{white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 20px;line-height:1.6}.result-actions{display:flex;justify-content:flex-end;gap:10px}
+    .employee-card{margin-top:10px;background:#fff;border:1px solid #bcc4cc;display:grid;grid-template-columns:105px 1fr;min-height:145px}
+    .employee-photo{border-right:1px solid #bcc4cc;position:relative;background:#f3f4f6;display:grid;place-items:center;overflow:hidden}.employee-photo img{width:100%;height:100%;object-fit:cover}.employee-photo .placeholder{text-align:center;color:#777;font-size:12px;padding:8px}.photo-action{position:absolute;left:5px;right:5px;bottom:5px;background:#000b;color:#fff;text-align:center;padding:6px 4px;border-radius:4px;font-size:11px;cursor:pointer}
+    .employee-info{padding:12px 14px}.emp-name{font-size:20px;color:var(--blue);font-weight:700;margin-bottom:5px}.emp-name-th{font-size:15px;color:var(--blue);margin-bottom:3px}.emp-meta{font-size:13px;line-height:1.5;color:#333}.empty{color:#8a8a8a;font-weight:400}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field label{display:block;font-size:13px;font-weight:700;margin:0 0 5px}.field.full{grid-column:1/-1}
+    .upload-box{background:#f8fafb;border:2px dashed #8593a1;border-radius:8px;padding:15px;text-align:center}.upload-box p{margin:7px 0;color:#53606c;font-size:13px}.upload-box input{display:none}
+    .photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:11px}.problem-photo{background:#fff;border:1px solid #777;position:relative}.problem-photo img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}.caption{width:100%;border:0;border-top:1px solid #777;padding:8px;font-size:13px}.remove{position:absolute;right:5px;top:5px;background:#b00020;color:#fff;border-radius:50%;width:30px;height:30px;padding:0;font-size:18px}
+    .actions{display:flex;gap:8px;justify-content:flex-end;padding:14px 12px 25px}.notice{font-size:12px;color:#525c66;line-height:1.5;background:#f8fafb;border-left:4px solid #17375e;padding:9px;margin-top:9px}
+    .spinner{width:17px;height:17px;border:3px solid #ffffff66;border-top-color:#fff;border-radius:50%;display:inline-block;vertical-align:middle;animation:spin .8s linear infinite;margin-right:5px}@keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:560px){.app{width:100%}.topbar{font-size:17px}.topbar small{display:none}.employee-card{grid-template-columns:92px 1fr}.employee-info{padding:9px}.emp-name{font-size:17px}.grid-2{grid-template-columns:1fr}.field.full{grid-column:auto}.photo-grid{grid-template-columns:1fr 1fr}.actions{position:sticky;bottom:0;background:#d7d7d7;padding-bottom:14px}.actions .btn{flex:1;padding:12px 8px}}
+    @media print{body{background:#fff}.app{box-shadow:none;max-width:none}.topbar,.search-block,.upload-box,.actions,.remove,.photo-action,.notice{display:none!important}.section{break-inside:avoid}.input,.textarea,.select{border:0;padding:4px 0;background:transparent}.problem-photo{break-inside:avoid}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar"><span>แบบฟอร์มแจ้งปัญหา : น้ำท่วม</span><small>Employee Problem Report</small></header>
+
+  <section id="employeeSearchSection" class="section search-block">
+    <h2 class="section-title">รหัสพนักงาน</h2>
+    <div class="search-row">
+      <input id="employeeId" class="input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="off" placeholder="กรอกรหัสพนักงาน" />
+      <button id="searchBtn" class="btn btn-blue" type="button">ค้นหา</button>
+    </div>
+    <div id="searchStatus" class="status"></div>
+  </section>
+
+  <section id="employeeInfoSection" class="section" hidden>
+    <div class="employee-card">
+      <div class="employee-photo">
+        <img id="employeePhoto" alt="รูปพนักงาน" hidden />
+        <div id="employeePlaceholder" class="placeholder">ยังไม่มี<br>รูปพนักงาน</div>
+        <label class="photo-action" for="employeePhotoInput">แนบ/เปลี่ยนรูป</label>
+        <input id="employeePhotoInput" type="file" accept="image/*" capture="user" hidden />
+      </div>
+      <div class="employee-info">
+        <div id="employeeNameTh" class="emp-name-th empty">ชื่อพนักงาน</div>
+        <div class="emp-meta">
+          <div id="employeeCode">รหัสพนักงาน / Employee ID</div>
+          <div id="employeeCompany">โรงงาน / Factory</div>
+          <div id="employeeDepartment">แผนก / Department</div>
+          <div id="employeeSection">หน่วยงาน / Section</div>
+          <div id="employeeLine">ไลน์ / Line</div>
+          <div id="employeePosition">ตำแหน่ง / Position</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="locationSection" class="section" hidden>
+    <h2 class="section-title">สถานที่ *</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="province">จังหวัด</label>
+        <select id="province" class="select">
+          <option value="">เลือกจังหวัด</option>
+          <option>จันทบุรี</option><option>ฉะเชิงเทรา</option><option>ชลบุรี</option>
+          <option>ตราด</option><option>ปราจีนบุรี</option><option>ระยอง</option>
+          <option>สระแก้ว</option><option value="อื่นๆ">จังหวัดอื่นๆ</option>
+        </select>
+      </div>
+      <div id="otherProvinceField" class="field" hidden>
+        <label for="otherProvince">ระบุจังหวัด</label>
+        <input id="otherProvince" class="input" placeholder="กรอกชื่อจังหวัด" />
+      </div>
+      <div id="districtSelectField" class="field">
+        <label for="district">อำเภอ / เขต</label>
+        <select id="district" class="select" disabled><option value="">เลือกจังหวัดก่อน</option></select>
+      </div>
+      <div id="subdistrictSelectField" class="field">
+        <label for="subdistrict">ตำบล / แขวง</label>
+        <select id="subdistrict" class="select" disabled><option value="">เลือกอำเภอก่อน</option></select>
+      </div>
+      <div id="otherDistrictField" class="field" hidden>
+        <label for="otherDistrict">ระบุอำเภอ / เขต</label>
+        <input id="otherDistrict" class="input" placeholder="กรอกชื่ออำเภอหรือเขต" />
+      </div>
+      <div id="otherSubdistrictField" class="field" hidden>
+        <label for="otherSubdistrict">ระบุตำบล / แขวง</label>
+        <input id="otherSubdistrict" class="input" placeholder="กรอกชื่อตำบลหรือแขวง" />
+      </div>
+      <div class="field full">
+        <label for="locationDetail">รายละเอียดสถานที่</label>
+        <input id="locationDetail" class="input" placeholder="บ้านเลขที่ หมู่ที่" />
+      </div>
+    </div>
+  </section>
+
+  <section id="problemPhotosSection" class="section" hidden>
+    <h2 class="section-title">รูปประกอบปัญหา</h2>
+    <div class="upload-box">
+      <label class="btn btn-dark" for="problemPhotos">ถ่ายรูป / เลือกรูป</label>
+      <input id="problemPhotos" type="file" accept="image/*" capture="environment" multiple />
+      <p>รองรับรูปภาพสูงสุด 4 รูป สามารถใส่คำอธิบายใต้แต่ละรูปได้</p>
+    </div>
+    <div id="photoGrid" class="photo-grid"></div>
+  </section>
+
+  <div id="actionsSection" class="actions" hidden style="flex-wrap:wrap">
+    <div id="submitStatus" class="status" role="status" aria-live="polite" style="display:none"></div>
+    <button id="submitBtn" class="btn btn-blue" type="button">สร้าง PDF และส่งอีเมล</button>
+  </div>
+  <div id="resultModal" class="result-modal" hidden role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-dialog">
+      <h2 id="resultTitle">ผลการดำเนินการ</h2>
+      <p id="resultMessage"></p>
+      <div class="result-actions"><button id="resultActionBtn" class="btn btn-blue" type="button">แสดง</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+<script>
+  // ใส่ URL จาก Power Automate: When an HTTP request is received
+  const CONFIG = {
+    employeeSearchUrl: "https://defaultd9cd485e39bd4cc995398c97631fbb.71.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/30/workflows/0f35abc9183a4484af4f9474032612fc/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qPKQhYc3R9UY7_uKWg5NqBfFB1hx7btyQq5w4saMGQo",
+    pdfSubmitUrl: "https://defaultd9cd485e39bd4cc995398c97631fbb.71.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/03/workflows/19249e28d1b64983baa6160bce1e7192/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=tv6d6wA70Mg7kOxFSEtEJbyzO90J6Y2My-Q4GWniWfk",
+    requestMethod: "POST",
+    maxProblemPhotos: 4,
+    maxFileMB: 8
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const state = { employee: null, problemPhotos: [] };
+
+  function setStatus(message, type="") {
+    const el = $("searchStatus"); el.textContent = message; el.className = `status ${type}`;
+  }
+
+  let resultAction = null;
+  function showResult(message, type, actionLabel, action) {
+    $("resultTitle").textContent = type === "ok" ? "สำเร็จ" : "ไม่สำเร็จ";
+    $("resultMessage").textContent = message;
+    $("resultActionBtn").textContent = actionLabel || "แสดง";
+    resultAction = action;
+    $("resultModal").hidden = false;
+    $("resultActionBtn").focus();
+  }
+  $("resultActionBtn").addEventListener("click", function() {
+    $("resultModal").hidden = true;
+    if (resultAction) { const action = resultAction; resultAction = null; action(); }
+  });
+
+  function resetFormToStart() {
+    $("employeeSearchSection").hidden = false;
+    $("employeeId").value = "";
+    $("searchStatus").textContent = "";
+    $("searchStatus").className = "status";
+    state.employee = null;
+    state.problemPhotos = [];
+    $("employeeNameTh").textContent = "ไม่พบชื่อพนักงาน";
+    ["employeeCode","employeeCompany","employeeDepartment","employeeSection","employeeLine","employeePosition"].forEach(function(id) { $(id).textContent = ""; });
+    $("employeePhoto").removeAttribute("src");
+    $("employeePhotoInput").value = "";
+    $("employeePhoto").hidden = true;
+    $("employeePlaceholder").hidden = false;
+    $("employeeInfoSection").hidden = true;
+    $("locationSection").hidden = true;
+    $("problemPhotosSection").hidden = true;
+    $("actionsSection").hidden = true;
+    $("province").value = "";
+    $("province").dispatchEvent(new Event("change"));
+    ["otherProvince","otherDistrict","otherSubdistrict","locationDetail"].forEach(function(id) { $(id).value = ""; });
+    $("problemPhotos").value = "";
+    $("photoGrid").innerHTML = "";
+    $("submitStatus").textContent = "";
+    $("submitBtn").disabled = false;
+    window.scrollTo({top:0,behavior:"smooth"});
+    $("employeeId").focus();
+  }
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => { const r = new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file); });
+  }
+
+  function renderEmployee(data={}) {
+    state.employee = data;
+    $("employeeNameTh").textContent = data.pr_name || data.nameTh || data.EmployeeNameTH || "ไม่พบชื่อพนักงาน";
+    $("employeeCode").textContent = "รหัสพนักงาน: " + (data.pr_code || $("employeeId").value.trim() || "-");
+    $("employeeCompany").textContent = "โรงงาน: " + (data.plan || data.company || data.Company || "-");
+    $("employeeDepartment").textContent = "แผนก: " + (data.department || data.Department || "-");
+    $("employeeSection").textContent = "หน่วยงาน: " + (data.section || data.Section || "-");
+    $("employeeLine").textContent = "ไลน์: " + (data.line || "-");
+    $("employeePosition").textContent = "ตำแหน่ง: " + (data.position || "-");
+    $("employeeNameTh").classList.remove("empty");
+    // ให้ใช้ Base64 ก่อน URL: รูปแบบนี้ html2canvas สามารถฝังลง PDF ได้โดยไม่ติดปัญหา CORS ของ SharePoint
+    const photo = data.photoBase64 || data.PhotoBase64 || data.photoDataUrl || data.PhotoDataUrl || data.photoUrl || data.PhotoUrl;
+    $("employeePhoto").onerror = function() {
+      this.removeAttribute("src");
+      this.hidden = true;
+      $("employeePlaceholder").hidden = false;
+    };
+    if(photo){
+      $("employeePhoto").hidden = false;
+      $("employeePlaceholder").hidden = true;
+      $("employeePhoto").src = photo;
+    } else {
+      $("employeePhoto").removeAttribute("src");
+      $("employeePhoto").hidden = true;
+      $("employeePlaceholder").hidden = false;
+    }
+    $("employeeInfoSection").hidden = false;
+    $("locationSection").hidden = false;
+    $("problemPhotosSection").hidden = false;
+    $("actionsSection").hidden = false;
+    $("employeeSearchSection").hidden = true;
+  }
+
+  $("employeeId").addEventListener("input", () => {
+    // อนุญาตเฉพาะตัวเลข 0-9 และจำกัดความยาวไม่เกิน 10 หลัก
+    $("employeeId").value = $("employeeId").value.replace(/[^0-9]/g, "").slice(0, 10);
+  });
+
+  $("searchBtn").addEventListener("click", async () => {
+    const employeeId = $("employeeId").value.trim();
+    if(!employeeId){ setStatus("กรุณากรอกรหัสพนักงาน", "error"); $("employeeId").focus(); return; }
+    if(!/^[0-9]{1,10}$/.test(employeeId)){ setStatus("รหัสพนักงานต้องเป็นตัวเลข 1–10 หลัก", "error"); $("employeeId").focus(); return; }
+    if(CONFIG.employeeSearchUrl.includes("PASTE_")){ setStatus("ยังไม่ได้กำหนด Power Automate HTTP URL ใน CONFIG", "error"); return; }
+    $("employeeInfoSection").hidden = true;
+    $("locationSection").hidden = true;
+    $("problemPhotosSection").hidden = true;
+    $("actionsSection").hidden = true;
+    const btn=$("searchBtn"); btn.disabled=true; btn.innerHTML='<span class="spinner"></span>กำลังค้นหา'; setStatus("กำลังค้นหาข้อมูล...");
+    try{
+      const res = await fetch(CONFIG.employeeSearchUrl, {
+        method: CONFIG.requestMethod,
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({employeeId})
+      });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if(data.found === false || (!data.pr_name && !data.nameTh && !data.EmployeeNameTH && !data.nameEn && !data.EmployeeNameEN && !data.displayName && !data.employee?.pr_name)) throw new Error("ไม่พบข้อมูลพนักงาน");
+      renderEmployee(data.employee || data); 
+    }catch(err){
+      $("employeeInfoSection").hidden = true;
+      $("locationSection").hidden = true;
+      $("problemPhotosSection").hidden = true;
+      $("actionsSection").hidden = true;
+      setStatus(`ค้นหาไม่สำเร็จ: ${err.message}`, "error");
+    }
+    finally{ btn.disabled=false; btn.textContent="ค้นหา"; }
+  });
+
+  $("employeeId").addEventListener("keydown", e => { if(e.key === "Enter") $("searchBtn").click(); });
+
+  $("employeePhotoInput").addEventListener("change", async e => {
+    const file=e.target.files[0]; if(!file) return;
+    if(!file.type.startsWith("image/")){ alert("กรุณาเลือกไฟล์รูปภาพ"); return; }
+    if(file.size > CONFIG.maxFileMB*1024*1024){ alert(`รูปต้องมีขนาดไม่เกิน ${CONFIG.maxFileMB} MB`); return; }
+    $("employeePhoto").src=await fileToDataUrl(file); $("employeePhoto").hidden=false; $("employeePlaceholder").hidden=true;
+  });
+
+  $("problemPhotos").addEventListener("change", async e => {
+    const files=[...e.target.files];
+    for(const file of files){
+      if(state.problemPhotos.length >= CONFIG.maxProblemPhotos){ alert(`แนบได้สูงสุด ${CONFIG.maxProblemPhotos} รูป`); break; }
+      if(!file.type.startsWith("image/") || file.size > CONFIG.maxFileMB*1024*1024) continue;
+      state.problemPhotos.push({id:crypto.randomUUID(), file, src:await fileToDataUrl(file), caption:""});
+    }
+    e.target.value=""; renderProblemPhotos();
+  });
+
+  function renderProblemPhotos(){
+    const grid=$("photoGrid"); grid.innerHTML="";
+    state.problemPhotos.forEach((p,index)=>{
+      const card=document.createElement("div"); card.className="problem-photo";
+      card.innerHTML=`<img src="${p.src}" alt="รูปปัญหาที่ ${index+1}"><button class="remove" type="button" aria-label="ลบรูป">×</button><input class="caption" value="${p.caption.replaceAll('"','&quot;')}" placeholder="คำอธิบายรูปที่ ${index+1}">`;
+      card.querySelector(".remove").onclick=()=>{state.problemPhotos=state.problemPhotos.filter(x=>x.id!==p.id);renderProblemPhotos();};
+      card.querySelector(".caption").oninput=e=>p.caption=e.target.value;
+      grid.appendChild(card);
+    });
+  }
+
+  const easternProvinceCodes = {
+    "จันทบุรี":22, "ฉะเชิงเทรา":24, "ชลบุรี":20, "ตราด":23,
+    "ปราจีนบุรี":25, "ระยอง":21, "สระแก้ว":27
+  };
+
+  const easternDistricts = {
+    "จันทบุรี":["เมืองจันทบุรี","ขลุง","ท่าใหม่","โป่งน้ำร้อน","มะขาม","แหลมสิงห์","สอยดาว","แก่งหางแมว","นายายอาม","เขาคิชฌกูฏ"],
+    "ฉะเชิงเทรา":["เมืองฉะเชิงเทรา","บางคล้า","บางน้ำเปรี้ยว","บางปะกง","บ้านโพธิ์","พนมสารคาม","ราชสาส์น","สนามชัยเขต","แปลงยาว","ท่าตะเกียบ","คลองเขื่อน"],
+    "ชลบุรี":["เมืองชลบุรี","บ้านบึง","หนองใหญ่","บางละมุง","พานทอง","พนัสนิคม","ศรีราชา","เกาะสีชัง","สัตหีบ","บ่อทอง","เกาะจันทร์"],
+    "ตราด":["เมืองตราด","คลองใหญ่","เขาสมิง","บ่อไร่","แหลมงอบ","เกาะกูด","เกาะช้าง"],
+    "ปราจีนบุรี":["เมืองปราจีนบุรี","กบินทร์บุรี","นาดี","บ้านสร้าง","ประจันตคาม","ศรีมหาโพธิ","ศรีมโหสถ"],
+    "ระยอง":["เมืองระยอง","บ้านฉาง","แกลง","วังจันทร์","บ้านค่าย","ปลวกแดง","เขาชะเมา","นิคมพัฒนา"],
+    "สระแก้ว":["เมืองสระแก้ว","คลองหาด","ตาพระยา","วังน้ำเย็น","วัฒนานคร","อรัญประเทศ","เขาฉกรรจ์","โคกสูง","วังสมบูรณ์"]
+  };
+
+  const builtInSubdistricts = {"จันทบุรี|ขลุง":["ขลุง","บ่อ","เกวียนหัก","ตะปอน","บางชัน","วันยาว","ซึ้ง","มาบไพ","วังสรรพรส","ตรอกนอง","ตกพรม","บ่อเวฬุ"],"จันทบุรี|ท่าใหม่":["ท่าใหม่","ยายร้า","สีพยา","บ่อพุ","พลอยแหวน","เขาวัว","เขาบายศรี","สองพี่น้อง","ทุ่งเบญจา","รำพัน","โขมง","ตะกาดเง้า","คลองขุด","เขาแก้ว"],"จันทบุรี|นายายอาม":["นายายอาม","วังโตนด","กระแจะ","สนามไชย","ช้างข้าม","วังใหม่"],"จันทบุรี|มะขาม":["มะขาม","ท่าหลวง","ปัถวี","วังแซ้ม","ฉมัน","อ่างคีรี"],"จันทบุรี|สอยดาว":["ปะตง","ทุ่งขนาน","ทับช้าง","ทรายขาว","สะตอน"],"จันทบุรี|เขาคิชฌกูฏ":["ชากไทย","พลวง","ตะเคียนทอง","คลองพลู","จันทเขลม"],"จันทบุรี|เมืองจันทบุรี":["ตลาด","วัดใหม่","คลองนารายณ์","เกาะขวาง","คมบาง","ท่าช้าง","จันทนิมิต","บางกะจะ","แสลง","หนองบัว","พลับพลา"],"จันทบุรี|แก่งหางแมว":["แก่งหางแมว","ขุนซ่อง","สามพี่น้อง","พวา","เขาวงกต"],"จันทบุรี|แหลมสิงห์":["ปากน้ำแหลมสิงห์","เกาะเปริด","หนองชิ่ม","พลิ้ว","คลองน้ำเค็ม","บางสระเก้า","บางกะไชย"],"จันทบุรี|โป่งน้ำร้อน":["ทับไทร","โป่งน้ำร้อน","หนองตาคง","เทพนิมิต","คลองใหญ่"],"ฉะเชิงเทรา|คลองเขื่อน":["ก้อนแก้ว","คลองเขื่อน","บางเล่า","บางโรง","บางตลาด"],"ฉะเชิงเทรา|ท่าตะเกียบ":["ท่าตะเกียบ","คลองตะเกรา"],"ฉะเชิงเทรา|บางคล้า":["บางคล้า","บางสวน","บางกระเจ็ด","ปากน้ำ","ท่าทองหลาง","สาวชะโงก","เสม็ดเหนือ","เสม็ดใต้","หัวไทร"],"ฉะเชิงเทรา|บางน้ำเปรี้ยว":["บางน้ำเปรี้ยว","บางขนาก","สิงโตทอง","หมอนทอง","บึงน้ำรักษ์","ดอนเกาะกา","โยธะกา","ดอนฉิมพลี","ศาลาแดง","โพรงอากาศ"],"ฉะเชิงเทรา|บางปะกง":["บางปะกง","ท่าสะอ้าน","บางวัว","บางสมัคร","บางผึ้ง","บางเกลือ","สองคลอง","หนองจอก","พิมพา","ท่าข้าม","หอมศีล","เขาดิน"],"ฉะเชิงเทรา|บ้านโพธิ์":["บ้านโพธิ์","เกาะไร่","คลองขุด","คลองบ้านโพธิ์","คลองประเวศ","ดอนทราย","เทพราช","ท่าพลับ","หนองตีนนก","หนองบัว","บางซ่อน","บางกรูด","แหลมประดู่","ลาดขวาง","สนามจันทร์","แสนภูดาษ","สิบเอ็ดศอก"],"ฉะเชิงเทรา|พนมสารคาม":["เกาะขนุน","บ้านซ่อง","พนมสารคาม","เมืองเก่า","หนองยาว","ท่าถ่าน","หนองแหน","เขาหินซ้อน"],"ฉะเชิงเทรา|ราชสาส์น":["บางคา","เมืองใหม่","ดงน้อย"],"ฉะเชิงเทรา|สนามชัยเขต":["คู้ยายหมี","ท่ากระดาน","ทุ่งพระยา","ลาดกระทิง"],"ฉะเชิงเทรา|เมืองฉะเชิงเทรา":["หน้าเมือง","ท่าไข่","บ้านใหม่","คลองนา","บางตีนเป็ด","บางไผ่","คลองจุกกระเฌอ","บางแก้ว","บางขวัญ","คลองนครเนื่องเขต","วังตะเคียน","โสธร","บางพระ","บางกะไห","หนามแดง","คลองเปรง","คลองอุดมชลจร","คลองหลวงแพ่ง","บางเตย"],"ฉะเชิงเทรา|แปลงยาว":["แปลงยาว","วังเย็น","หัวสำโรง","หนองไม้แก่น"],"ชลบุรี|บางละมุง":["บางละมุง","หนองปรือ","หนองปลาไหล","โป่ง","เขาไม้แก้ว","ห้วยใหญ่","ตะเคียนเตี้ย","นาเกลือ"],"ชลบุรี|บ่อทอง":["บ่อทอง","วัดสุวรรณ","บ่อกวางทอง","ธาตุทอง","เกษตรสุวรรณ","พลวงทอง"],"ชลบุรี|บ้านบึง":["บ้านบึง","คลองกิ่ว","มาบไผ่","หนองซ้ำซาก","หนองบอนแดง","หนองชาก","หนองอิรุณ","หนองไผ่แก้ว"],"ชลบุรี|พนัสนิคม":["พนัสนิคม","หน้าพระธาตุ","วัดหลวง","บ้านเซิด","นาเริก","หมอนนาง","สระสี่เหลี่ยม","วัดโบสถ์","กุฎโง้ง","หัวถนน","ท่าข้าม","หนองปรือ","หนองขยาด","ทุ่งขวาง","หนองเหียง","นาวังหิน","บ้านช้าง","โคกเพลาะ","ไร่หลักทอง","นามะตูม"],"ชลบุรี|พานทอง":["พานทอง","หนองตำลึง","มาบโป่ง","หนองกะขะ","หนองหงษ์","โคกขี้หนอน","บ้านเก่า","หน้าประดู่","บางนาง","เกาะลอย","บางหัก"],"ชลบุรี|ศรีราชา":["ศรีราชา","สุรศักดิ์","ทุ่งสุขลา","บึง","หนองขาม","เขาคันทรง","บางพระ","บ่อวิน"],"ชลบุรี|สัตหีบ":["สัตหีบ","นาจอมเทียน","พลูตาหลวง","บางเสร่","แสมสาร"],"ชลบุรี|หนองใหญ่":["หนองใหญ่","คลองพลู","หนองเสือช้าง","ห้างสูง","เขาซก"],"ชลบุรี|เกาะจันทร์":["เกาะจันทร์","ท่าบุญมี"],"ชลบุรี|เกาะสีชัง":["ท่าเทววงษ์"],"ชลบุรี|เมืองชลบุรี":["บางปลาสร้อย","มะขามหย่ง","บ้านโขด","แสนสุข","บ้านสวน","หนองรี","นาป่า","หนองข้างคอก","ดอนหัวฬ่อ","หนองไม้แดง","บางทราย","คลองตำหรุ","เหมือง","บ้านปึก","ห้วยกะปิ","เสม็ด","อ่างศิลา","สำนักบก"],"ตราด|คลองใหญ่":["คลองใหญ่","ไม้รูด","หาดเล็ก"],"ตราด|บ่อไร่":["บ่อพลอย","ช้างทูน","ด่านชุมพล","หนองบอน","นนทรีย์"],"ตราด|เกาะกูด":["เกาะหมาก","เกาะกูด"],"ตราด|เกาะช้าง":["เกาะช้าง","เกาะช้างใต้"],"ตราด|เขาสมิง":["เขาสมิง","แสนตุ้ง","วังตะเคียน","ท่าโสม","สะตอ","ประณีต","เทพนิมิต","ทุ่งนนทรี"],"ตราด|เมืองตราด":["บางพระ","หนองเสม็ด","หนองโสน","หนองคันทรง","ห้วงน้ำขาว","อ่าวใหญ่","วังกระแจะ","ห้วยแร้ง","เนินทราย","ท่าพริก","ท่ากุ่ม","ตะกาง","ชำราก","แหลมกลัด"],"ตราด|แหลมงอบ":["แหลมงอบ","น้ำเชี่ยว","บางปิด","คลองใหญ่"],"ปราจีนบุรี|กบินทร์บุรี":["กบินทร์","เมืองเก่า","วังดาล","นนทรี","ย่านรี","วังตะเคียน","หาดนางแก้ว","ลาดตะเคียน","บ้านนา","บ่อทอง","หนองกี่","นาแขม","เขาไม้แก้ว","วังท่าช้าง"],"ปราจีนบุรี|นาดี":["นาดี","สำพันตา","สะพานหิน","ทุ่งโพธิ์","แก่งดินสอ","บุพราหมณ์"],"ปราจีนบุรี|บ้านสร้าง":["บ้านสร้าง","บางกระเบา","บางเตย","บางยาง","บางแตน","บางพลวง","บางปลาร้า","บางขาม","กระทุ่มแพ้ว"],"ปราจีนบุรี|ประจันตคาม":["ประจันตคาม","เกาะลอย","บ้านหอย","หนองแสง","ดงบัง","คำโตนด","บุฝ้าย","หนองแก้ว","โพธิ์งาม"],"ปราจีนบุรี|ศรีมหาโพธิ":["ศรีมหาโพธิ","สัมพันธ์","บ้านทาม","ท่าตูม","บางกุ้ง","ดงกระทงยาม","หนองโพรง","หัวหว้า","หาดยาง","กรอกสมบูรณ์"],"ปราจีนบุรี|ศรีมโหสถ":["โคกปีบ","โคกไทย","คู้ลำพัน","ไผ่ชะเลือด"],"ปราจีนบุรี|เมืองปราจีนบุรี":["หน้าเมือง","รอบเมือง","วัดโบสถ์","บางเดชะ","ท่างาม","บางบริบูรณ์","ดงพระราม","บ้านพระ","โคกไม้ลาย","ไม้เค็ด","ดงขี้เหล็ก","เนินหอม","โนนห้อม"],"ระยอง|นิคมพัฒนา":["นิคมพัฒนา","มาบข่า","พนานิคม","มะขามคู่"],"ระยอง|บ้านค่าย":["บ้านค่าย","หนองละลอก","หนองตะพาน","ตาขัน","บางบุตร","หนองบัว","ชากบก"],"ระยอง|บ้านฉาง":["สำนักท้อน","พลา","บ้านฉาง"],"ระยอง|ปลวกแดง":["ปลวกแดง","ตาสิทธิ์","ละหาร","แม่น้ำคู้","มาบยางพร","หนองไร่"],"ระยอง|วังจันทร์":["วังจันทร์","ชุมแสง","ป่ายุบใน","พลงตาเอี่ยม"],"ระยอง|เขาชะเมา":["น้ำเป็น","ห้วยทับมอญ","ชำฆ้อ","เขาน้อย"],"ระยอง|เมืองระยอง":["ท่าประดู่","เชิงเนิน","ตะพง","ปากน้ำ","เพ","แกลง","บ้านแลง","นาตาขวัญ","เนินพระ","กะเฉด","ทับมา","น้ำคอก","ห้วยโป่ง","มาบตาพุด","สำนักทอง"],"ระยอง|แกลง":["ทางเกวียน","วังหว้า","ชากโดน","เนินฆ้อ","กร่ำ","ชากพง","กระแสบน","บ้านนา","ทุ่งควายกิน","กองดิน","คลองปูน","พังราด","ปากน้ำกระแส","ห้วยยาง","สองสลึง"],"สระแก้ว|คลองหาด":["คลองหาด","ไทยอุดม","ซับมะกรูด","ไทรเดี่ยว","คลองไก่เถื่อน","เบญจขร","ไทรทอง"],"สระแก้ว|ตาพระยา":["ตาพระยา","ทัพเสด็จ","ทัพราช","ทัพไทย","โคคลาน"],"สระแก้ว|วังน้ำเย็น":["วังน้ำเย็น","ตาหลังใน","คลองหินปูน","ทุ่งมหาเจริญ"],"สระแก้ว|วังสมบูรณ์":["วังสมบูรณ์","วังใหม่","วังทอง"],"สระแก้ว|วัฒนานคร":["วัฒนานคร","ท่าเกวียน","ผักขะ","โนนหมากเค็ง","หนองน้ำใส","ช่องกุ่ม","หนองแวง","แซร์ออ","หนองหมากฝ้าย","หนองตะเคียนบอน","ห้วยโจด"],"สระแก้ว|อรัญประเทศ":["อรัญประเทศ","เมืองไผ่","หันทราย","คลองน้ำใส","ท่าข้าม","ป่าไร่","ทับพริก","บ้านใหม่หนองไทร","ผ่านศึก","หนองสังข์","คลองทับจันทร์","ฟากห้วย","บ้านด่าน"],"สระแก้ว|เขาฉกรรจ์":["เขาฉกรรจ์","หนองหว้า","พระเพลิง","เขาสามสิบ"],"สระแก้ว|เมืองสระแก้ว":["สระแก้ว","บ้านแก้ง","ศาลาลำดวน","โคกปี่ฆ้อง","ท่าแยก","ท่าเกษม","สระขวัญ","หนองบอน"],"สระแก้ว|โคกสูง":["โคกสูง","หนองม่วง","หนองแวง","โนนหมากมุ่น"]};
+
+  function resetSubdistrict(message="เลือกอำเภอก่อน"){
+    const el=$("subdistrict");
+    el.disabled=true;
+    el.innerHTML=`<option value="">${message}</option>`;
+  }
+
+  $("province").addEventListener("change", () => {
+    const province = $("province").value;
+    const isOther = province === "อื่นๆ";
+    $("otherProvinceField").hidden = !isOther;
+    $("otherDistrictField").hidden = !isOther;
+    $("otherSubdistrictField").hidden = !isOther;
+    $("districtSelectField").hidden = isOther;
+    $("subdistrictSelectField").hidden = isOther;
+    resetSubdistrict(isOther ? "กรอกตำบลเองด้านล่าง" : "เลือกอำเภอก่อน");
+    if(!isOther){
+      $("otherProvince").value="";
+      $("otherDistrict").value="";
+      $("otherSubdistrict").value="";
+    }
+    const district = $("district");
+    district.innerHTML = "";
+    if(!province){ district.disabled=true; district.innerHTML='<option value="">เลือกจังหวัดก่อน</option>'; return; }
+    if(isOther){ district.disabled=true; district.innerHTML='<option value="">กรอกอำเภอเองด้านล่าง</option>'; return; }
+    district.disabled=false;
+    district.innerHTML='<option value="">เลือกอำเภอ</option>' + easternDistricts[province].map(x=>`<option value="${x}">${x}</option>`).join("");
+  });
+
+  $("district").addEventListener("change", () => {
+    const provinceName = $("province").value;
+    const districtName = $("district").value;
+    resetSubdistrict(districtName ? "กำลังแสดงตำบล..." : "เลือกอำเภอก่อน");
+    if(!districtName) return;
+    const names = builtInSubdistricts[`${provinceName}|${districtName}`] || [];
+    const el=$("subdistrict");
+    el.disabled=false;
+    el.innerHTML='<option value="">เลือกตำบล</option>' + names.map(x=>`<option value="${x}">${x}</option>`).join("");
+  });
+
+  function reportValue(id) { return $(id).textContent.trim() || "-"; }
+  function escapeHtml(value) {
+    return String(value == null ? "-" : value).replace(/[&<>"\']/g, function(ch) {
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","\'":"&#39;"}[ch];
+    });
+  }
+  function getLocationData() {
+    const other = $("province").value === "อื่นๆ";
+    return {
+      province: (other ? $("otherProvince").value : $("province").value).trim() || "-",
+      district: (other ? $("otherDistrict").value : $("district").value).trim() || "-",
+      subdistrict: (other ? $("otherSubdistrict").value : ($("subdistrict").value || $("otherSubdistrict").value)).trim() || "-",
+      detail: $("locationDetail").value.trim() || "-"
+    };
+  }
+  function buildReportElement() {
+    const loc = getLocationData();
+    // ใช้รูปที่หน้าเว็บแสดงอยู่ โดยตรวจสอบก่อนว่ามีแหล่งรูปจริง
+    const employeePhotoSrc = (!$("employeePhoto").hidden && $("employeePhoto").getAttribute("src")) ? $("employeePhoto").getAttribute("src") : "";
+    const employeePhoto = employeePhotoSrc ? '<img class="emp-photo" src="' + employeePhotoSrc.replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '" alt="รูปพนักงาน">' : '<div class="emp-photo-placeholder">ไม่มีรูปพนักงานใน PDF<br>ตรวจสอบ photoBase64 ใน Power Automate</div>';
+    const photoHtml = state.problemPhotos.map(function(p, i) {
+      return '<div class="problem"><img src="' + p.src + '" alt="รูปปัญหา"><div><b>รูปที่ ' + (i + 1) + '</b><p>' + escapeHtml(p.caption || "-") + '</p></div></div>';
+    }).join("");
+    const fields = [
+      ["รหัสพนักงาน", reportValue("employeeCode").replace(/^รหัสพนักงาน:\\s*/, "")],
+      ["โรงงาน", reportValue("employeeCompany").replace(/^โรงงาน:\\s*/, "")],
+      ["แผนก", reportValue("employeeDepartment").replace(/^แผนก:\\s*/, "")],
+      ["หน่วยงาน", reportValue("employeeSection").replace(/^หน่วยงาน:\\s*/, "")],
+      ["ไลน์", reportValue("employeeLine").replace(/^ไลน์:\\s*/, "")],
+      ["ตำแหน่ง", reportValue("employeePosition").replace(/^ตำแหน่ง:\\s*/, "")]
+    ].map(function(pair) { return "<p><b>" + pair[0] + ":</b> " + escapeHtml(pair[1]) + "</p>"; }).join("");
+    const report = document.createElement("div");
+    report.className = "pdf-report";
+    report.style.cssText = "position:relative;left:auto;top:auto;width:720px;min-height:100px;display:block;visibility:visible;opacity:1;overflow:visible;margin:0;background:#fff;color:#111;padding:24px;box-sizing:border-box;font-family:Arial,'Noto Sans Thai',sans-serif;font-size:13px;line-height:1.5;z-index:10000";
+    report.innerHTML = '<div style="border-bottom:3px solid #17375e;padding-bottom:12px;margin-bottom:18px"><h1 style="font-size:23px;margin:0 0 4px;color:#17375e">แบบฟอร์มแจ้งปัญหา</h1><div>Employee Problem Report</div><div style="margin-top:8px">วันที่จัดทำ: ' + escapeHtml(new Date().toLocaleString("th-TH")) + '</div></div>' +
+      '<h2 style="font-size:16px;background:#eef2f5;padding:8px;margin:0 0 10px">ข้อมูลพนักงาน</h2><div style="display:flex;gap:16px;margin-bottom:18px">' + employeePhoto + '<div style="flex:1"><h3 style="font-size:18px;margin:0 0 8px;color:#0b45a0">' + escapeHtml(reportValue("employeeNameTh")) + '</h3>' + fields + '</div></div>' +
+      '<h2 style="font-size:16px;background:#eef2f5;padding:8px;margin:0 0 10px">สถานที่เกิดปัญหา</h2><p><b>จังหวัด:</b> ' + escapeHtml(loc.province) + '</p><p><b>อำเภอ / เขต:</b> ' + escapeHtml(loc.district) + '</p><p><b>ตำบล / แขวง:</b> ' + escapeHtml(loc.subdistrict) + '</p><p><b>รายละเอียดสถานที่:</b> ' + escapeHtml(loc.detail) + '</p>' +
+      '<h2 style="font-size:16px;background:#eef2f5;padding:8px;margin:18px 0 10px;page-break-before:always;break-before:page">รูปประกอบปัญหา (' + state.problemPhotos.length + ' รูป)</h2><div class="problem-grid">' + photoHtml + '</div>' +
+      '<style>.emp-photo{display:block;width:110px;height:130px;object-fit:cover;border:1px solid #ddd;flex:0 0 110px}.emp-photo-placeholder{width:110px;height:130px;flex:0 0 110px;border:1px solid #ddd;background:#f3f4f6;color:#555;font-size:10px;text-align:center;display:flex;align-items:center;justify-content:center;padding:5px;box-sizing:border-box}.problem-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:14px;height:900px}.problem{min-width:0;min-height:0;display:flex;flex-direction:column;align-items:stretch;margin:0;padding:8px;border:1px solid #ddd;box-sizing:border-box;overflow:hidden;page-break-inside:avoid;break-inside:avoid}.problem img{display:block;width:100%;height:245px;object-fit:contain;flex:0 0 245px}.problem-caption{min-height:0;overflow:hidden;overflow-wrap:anywhere}.problem p{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;margin:5px 0}.problem>div{min-width:0;overflow-wrap:anywhere}.pdf-report h2{break-after:avoid;page-break-after:avoid}</style>';
+    document.body.appendChild(report);
+    return report;
+  }
+  function blobToBase64(blob) {
+    return new Promise(function(resolve, reject) {
+      const reader = new FileReader();
+      reader.onload = function() { resolve(String(reader.result).split(",")[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+  $("submitBtn").addEventListener("click", async function() {
+    const missing=[];
+    const province = $("province").value;
+    if(!province) missing.push("จังหวัด");
+    else if(province === "อื่นๆ") {
+      if(!$("otherProvince").value.trim()) missing.push("ชื่อจังหวัด");
+      if(!$("otherDistrict").value.trim()) missing.push("อำเภอ / เขต");
+      if(!$("otherSubdistrict").value.trim()) missing.push("ตำบล / แขวง");
+    } else {
+      if(!$("district").value) missing.push("อำเภอ");
+      if(!$("subdistrict").value && !$("otherSubdistrict").value.trim()) missing.push("ตำบล");
+    }
+    if(!$("locationDetail").value.trim()) missing.push("รายละเอียดสถานที่");
+    if(state.problemPhotos.length === 0) missing.push("รูปประกอบปัญหา");
+    if(missing.length){ alert("กรุณากรอกข้อมูล: "+missing.join(", ")); return; }
+    if(typeof html2pdf === "undefined"){ alert("โหลดเครื่องมือสร้าง PDF ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่"); return; }
+    const btn=$("submitBtn"), status=$("submitStatus");
+    const app=document.querySelector(".app");
+    if(!app){ status.className="status error"; status.textContent="ไม่พบส่วนฟอร์ม .app ในหน้าเว็บ"; btn.disabled=false; return; }
+    const previousDisplay=app.style.display;
+    btn.disabled=true; status.className="status"; status.textContent="กำลังสร้าง PDF...";
+    let report;
+    let emailPayload = null;
+    let pdfDownloaded = false;
+    try {
+      report=buildReportElement();
+      const employeeId = (state.employee && state.employee.pr_code || $("employeeId").value.trim() || "employee").replace(/[^a-zA-Z0-9_-]/g,"");
+      const fileName="EmployeeProblem_" + employeeId + "_" + new Date().toISOString().slice(0,10) + ".pdf";
+      await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve);});});
+      // รอให้รูปในรายงานโหลดเสร็จ และหยุดพร้อมข้อความชัดเจนหากรูปพนักงานเป็น URL ที่ canvas อ่านไม่ได้
+      const reportImages = Array.from(report.querySelectorAll("img"));
+      await Promise.all(reportImages.map(function(img){
+        if(img.complete) return Promise.resolve();
+        return new Promise(function(resolve){ img.onload=resolve; img.onerror=resolve; });
+      }));
+      const employeePdfImage = report.querySelector(".emp-photo");
+      if(employeePdfImage && employeePdfImage.tagName === "IMG" && (!employeePdfImage.complete || employeePdfImage.naturalWidth === 0)) {
+        throw new Error("โหลดรูปพนักงานสำหรับ PDF ไม่สำเร็จ กรุณาให้ Power Automate ส่ง photoBase64 เป็น Data URL (data:image/jpeg;base64,...) ไม่ใช่ส่งเฉพาะ photoUrl");
+      }
+      const pdfBlob=await html2pdf().set({margin:[8,8,10,8],image:{type:"jpeg",quality:0.95},html2canvas:{scale:1.5,useCORS:true,allowTaint:false,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0},jsPDF:{unit:"mm",format:"a4",orientation:"portrait",compress:true},pagebreak:{mode:["css"]}}).from(report).outputPdf("blob");
+      const downloadUrl=URL.createObjectURL(pdfBlob), link=document.createElement("a");
+      link.href=downloadUrl; link.download=fileName; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function(){URL.revokeObjectURL(downloadUrl);},30000);
+      pdfDownloaded = true;
+      if(CONFIG.pdfSubmitUrl.indexOf("PASTE_PDF_EMAIL_FLOW_URL_HERE") !== -1) {
+        showResult("ดาวน์โหลด PDF ลงเครื่องแล้ว แต่ยังไม่ได้ตั้งค่า URL ของ Power Automate สำหรับส่งอีเมล", "error", "แสดง", function() {});
+        return;
+      }
+      status.textContent="";
+      emailPayload={to:"sthongon@toyota.co.th",fileName:fileName,contentType:"application/pdf",pdfBase64:await blobToBase64(pdfBlob),employeeId:employeeId,employeeName:reportValue("employeeNameTh"),createdAt:new Date().toISOString()};
+      const response=await fetch(CONFIG.pdfSubmitUrl,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(emailPayload)});
+      if(!response.ok) throw new Error("Power Automate ตอบกลับ HTTP " + response.status);
+      showResult("ดาวน์โหลด PDF ลงเครื่องแล้ว และส่งคำขออีเมลสำเร็จ", "ok", "แสดง", resetFormToStart);
+    } catch(err) {
+      status.textContent="";
+      const failureMessage=(pdfDownloaded ? "ดาวน์โหลด PDF ลงเครื่องแล้ว แต่ส่งคำขออีเมลไม่สำเร็จ: " : "สร้าง PDF หรือส่งอีเมลไม่สำเร็จ: ") + err.message + (pdfDownloaded ? " กดปุ่มส่งอีกครั้งเพื่อลองส่งอีเมลใหม่" : " กรุณาตรวจสอบข้อมูลแล้วลองใหม่");
+      showResult(failureMessage, "error", emailPayload ? "ส่งอีกครั้ง" : "แสดง", emailPayload ? async function retryEmail() {
+        try {
+          $("resultActionBtn").disabled=true;
+          const retryResponse=await fetch(CONFIG.pdfSubmitUrl,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(emailPayload)});
+          if(!retryResponse.ok) throw new Error("Power Automate ตอบกลับ HTTP " + retryResponse.status);
+          showResult("ส่งคำขออีเมลสำเร็จแล้ว", "ok", "แสดง", resetFormToStart);
+        } catch(retryErr) {
+          showResult("ส่งคำขออีเมลยังไม่สำเร็จ: " + retryErr.message + " กดส่งอีกครั้งเพื่อลองใหม่", "error", "ส่งอีกครั้ง", retryEmail);
+        } finally { $("resultActionBtn").disabled=false; }
+      } : function() {});
+    } finally { app.style.display=previousDisplay; app.style.visibility=""; if(report) report.remove(); btn.disabled=false; }
+  });
+</script>
+</body>
+</html>
