@@ -108,7 +108,7 @@
     <div class="upload-box">
       <label class="btn btn-dark" for="problemPhotos">ถ่ายรูป / เลือกรูป</label>
       <input id="problemPhotos" type="file" accept="image/*" multiple />
-      <p>รองรับรูปภาพสูงสุด 4 รูป สามารถใส่คำอธิบายใต้แต่ละรูปได้</p>
+      <p>รองรับรูปภาพสูงสุด 8 รูป สามารถใส่คำอธิบายใต้แต่ละรูปได้</p>
     </div>
     <div id="photoGrid" class="photo-grid"></div>
   </section>
@@ -133,7 +133,7 @@
     employeeSearchUrl: "https://defaultd9cd485e39bd4cc995398c97631fbb.71.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/30/workflows/0f35abc9183a4484af4f9474032612fc/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qPKQhYc3R9UY7_uKWg5NqBfFB1hx7btyQq5w4saMGQo",
     pdfSubmitUrl: "https://defaultd9cd485e39bd4cc995398c97631fbb.71.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/03/workflows/19249e28d1b64983baa6160bce1e7192/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=tv6d6wA70Mg7kOxFSEtEJbyzO90J6Y2My-Q4GWniWfk",
     requestMethod: "POST",
-    maxProblemPhotos: 4,
+    maxProblemPhotos: 8,
     maxFileMB: 8
   };
 
@@ -382,7 +382,7 @@
       '<h2 style="font-size:16px;background:#eef2f5;padding:8px;margin:0 0 10px">ข้อมูลพนักงาน</h2><div style="display:flex;gap:16px;margin-bottom:18px">' + employeePhoto + '<div style="flex:1"><h3 style="font-size:18px;margin:0 0 8px;color:#0b45a0">' + escapeHtml(reportValue("employeeNameTh")) + '</h3>' + fields + '</div></div>' +
       '<h2 style="font-size:16px;background:#eef2f5;padding:8px;margin:0 0 10px">สถานที่เกิดปัญหา</h2><p><b>จังหวัด:</b> ' + escapeHtml(loc.province) + '</p><p><b>อำเภอ / เขต:</b> ' + escapeHtml(loc.district) + '</p><p><b>ตำบล / แขวง:</b> ' + escapeHtml(loc.subdistrict) + '</p><p><b>รายละเอียดสถานที่:</b> ' + escapeHtml(loc.detail) + '</p>' +
       '<h2 style="font-size:16px;background:#eef2f5;padding:8px;margin:18px 0 10px;page-break-before:always;break-before:page">รูปประกอบปัญหา (' + state.problemPhotos.length + ' รูป)</h2><div class="problem-grid">' + photoHtml + '</div>' +
-      '<style>.emp-photo{display:block;width:110px;height:130px;object-fit:cover;border:1px solid #ddd;flex:0 0 110px}.emp-photo-placeholder{width:110px;height:130px;flex:0 0 110px;border:1px solid #ddd;background:#f3f4f6;color:#555;font-size:10px;text-align:center;display:flex;align-items:center;justify-content:center;padding:5px;box-sizing:border-box}.problem-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:14px;height:900px}.problem{min-width:0;min-height:0;display:flex;flex-direction:column;align-items:stretch;margin:0;padding:8px;border:1px solid #ddd;box-sizing:border-box;overflow:hidden;page-break-inside:avoid;break-inside:avoid}.problem img{display:block;width:100%;height:245px;object-fit:contain;flex:0 0 245px}.problem-caption{min-height:0;overflow:hidden;overflow-wrap:anywhere}.problem p{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;margin:5px 0}.problem>div{min-width:0;overflow-wrap:anywhere}.pdf-report h2{break-after:avoid;page-break-after:avoid}</style>';
+      '<style>.emp-photo{display:block;width:110px;height:130px;object-fit:cover;border:1px solid #ddd;flex:0 0 110px}.emp-photo-placeholder{width:110px;height:130px;flex:0 0 110px;border:1px solid #ddd;background:#f3f4f6;color:#555;font-size:10px;text-align:center;display:flex;align-items:center;justify-content:center;padding:5px;box-sizing:border-box}.problem-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:8px;height:900px;overflow:hidden}.problem{min-width:0;min-height:0;display:flex;flex-direction:column;align-items:stretch;margin:0;padding:6px;border:1px solid #ddd;box-sizing:border-box;overflow:hidden;page-break-inside:avoid;break-inside:avoid}.problem img{display:block;width:100%;height:150px;object-fit:contain;flex:0 0 150px}.problem-caption{min-height:0;overflow:hidden;overflow-wrap:anywhere}.problem p{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;margin:3px 0;font-size:11px;line-height:1.25;max-height:42px;overflow:hidden}.problem>div{min-width:0;overflow-wrap:anywhere}.pdf-report h2{break-after:avoid;page-break-after:avoid}</style>';
     document.body.appendChild(report);
     return report;
   }
